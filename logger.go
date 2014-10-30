@@ -403,6 +403,48 @@ func (logger Logger) Tracef(message string, args ...interface{}) {
 	logger.Logf(TRACE, message, args...)
 }
 
+// CriticalErrf logs the printf-formatted message at critical level
+// along with the error's Error() string.
+func (logger Logger) CriticalErrf(err error, message string, args ...interface{}) {
+	args = append(args, err)
+	logger.Logf(CRITICAL, message+": %v", args...)
+}
+
+// ErrorErrf logs the printf-formatted message at error level.
+// along with the error's Error() string.
+func (logger Logger) ErrorErrf(err error, message string, args ...interface{}) {
+	args = append(args, err)
+	logger.Logf(ERROR, message+": %v", args...)
+}
+
+// Warningf logs the printf-formatted message at warning level.
+// along with the error's Error() string.
+func (logger Logger) WarningErrf(err error, message string, args ...interface{}) {
+	args = append(args, err)
+	logger.Logf(WARNING, message+": %v", args...)
+}
+
+// Infof logs the printf-formatted message at info level.
+// along with the error's Error() string.
+func (logger Logger) InfoErrf(err error, message string, args ...interface{}) {
+	args = append(args, err)
+	logger.Logf(INFO, message+": %v", args...)
+}
+
+// Debugf logs the printf-formatted message at debug level.
+// along with the error's Error() string.
+func (logger Logger) DebugErrf(err error, message string, args ...interface{}) {
+	args = append(args, err)
+	logger.Logf(DEBUG, message+": %v", args...)
+}
+
+// Tracef logs the printf-formatted message at trace level.
+// along with the error's Error() string.
+func (logger Logger) TraceErrf(err error, message string, args ...interface{}) {
+	args = append(args, err)
+	logger.Logf(TRACE, message+": %v", args...)
+}
+
 // IsLevelEnabled returns whether debugging is enabled
 // for the given log level.
 func (logger Logger) IsLevelEnabled(level Level) bool {
