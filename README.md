@@ -16,14 +16,12 @@ Modules have names that are defined by dotted strings.
 
 	"first.second.third"
 
-There is a root module that has the name "".  Each module
+There is a root module that has the name `""`.  Each module
 (except the root module) has a parent, identified by the part of
 the name without the last dotted value.
-
-
-	the parent of "first.second.third" is "first.second"
-	the parent of "first.second" is "first"
-	the parent of "first" is "" (the root module)
+* the parent of "first.second.third" is "first.second"
+* the parent of "first.second" is "first"
+* the parent of "first" is "" (the root module)
 
 Each module can specify its own severity level.  Logging calls that are of
 a lower severity than the module's effective severity level are not written
