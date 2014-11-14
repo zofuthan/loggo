@@ -121,7 +121,7 @@ func (s *writerSuite) TestWritingCapturesFileAndLineAndModule(c *gc.C) {
 	log := writer.Log()
 	c.Assert(log, gc.HasLen, 1)
 	c.Assert(log[0].Filename, gc.Equals, "writer_test.go")
-	c.Assert(log[0].Line, gc.Equals, 113)
+	c.Assert(log[0].Line, gc.Equals, 116)
 	c.Assert(log[0].Module, gc.Equals, "test.writer")
 }
 

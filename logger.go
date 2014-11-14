@@ -388,15 +388,23 @@ type ErrorStacker interface {
 }
 
 func errorMessage(err error, message string, args ...interface{}) string {
-	args = append(args, err)
-	formatted := fmt.Sprintf(format, message+": %v", args...)
+	formattedMessage := message
+	if len(args) > 0 {
+		formattedMessage = strings.TrimSpace(fmt.Sprintf(message, args...))
+	}
+	errorMessage := strings.TrimSpace(err.Error())
+	if formattedMessage == "" {
+		formattedMessage = errorMessage
+	} else {
+		formattedMessage += ": " + errorMessage
+	}
 	if stacker, ok := err.(ErrorStacker); ok {
 		stack := strings.TrimSpace(stacker.ErrorStack())
 		if stack != "" {
-			formatted = formatted + "\n" + stack
+			formattedMessage += "\n" + stack
 		}
 	}
-	return formatted
+	return formattedMessage
 }
 
 // CriticalStackf logs the printf-formatted message at critical level
