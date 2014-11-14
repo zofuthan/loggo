@@ -5,6 +5,7 @@ package loggo
 
 import (
 	"fmt"
+	"reflect"
 	"runtime"
 	"sort"
 	"strings"
@@ -392,13 +393,13 @@ func errorMessage(err error, message string, args ...interface{}) string {
 	if len(args) > 0 {
 		formattedMessage = strings.TrimSpace(fmt.Sprintf(message, args...))
 	}
-	errorMessage := strings.TrimSpace(err.Error())
+	errorMessage := strings.TrimSpace(fmt.Sprint(err))
 	if formattedMessage == "" {
 		formattedMessage = errorMessage
 	} else {
 		formattedMessage += ": " + errorMessage
 	}
-	if stacker, ok := err.(ErrorStacker); ok {
+	if stacker, ok := err.(ErrorStacker); ok && !reflect.ValueOf(err).IsNil() {
 		stack := strings.TrimSpace(stacker.ErrorStack())
 		if stack != "" {
 			formattedMessage += "\n" + stack

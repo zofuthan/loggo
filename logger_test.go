@@ -4,18 +4,14 @@
 package loggo_test
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
-	"testing"
 
 	gc "gopkg.in/check.v1"
 
 	"github.com/juju/loggo"
 )
-
-func Test(t *testing.T) {
-	gc.TestingT(t)
-}
 
 type loggerSuite struct{}
 
@@ -239,6 +235,114 @@ func (*loggerSuite) TestLevelStringValue(c *gc.C) {
 	for level, str := range levelStringValueTests {
 		c.Assert(level.String(), gc.Equals, str)
 	}
+}
+
+type stack_error struct {
+	message string
+	stack   string
+}
+
+func (s *stack_error) Error() string {
+	return s.message
+}
+func (s *stack_error) ErrorStack() string {
+	return s.stack
+}
+
+func checkLastMessage(c *gc.C, writer *loggo.TestWriter, expected string) {
+	log := writer.Log()
+	writer.Clear()
+	obtained := log[len(log)-1].Message
+	c.Check(obtained, gc.Equals, expected)
+}
+
+func (*loggerSuite) TestLoggingStrings(c *gc.C) {
+	writer := &loggo.TestWriter{}
+	loggo.ReplaceDefaultWriter(writer)
+	logger := loggo.GetLogger("test")
+	logger.SetLogLevel(loggo.TRACE)
+
+	logger.Infof("simple")
+	checkLastMessage(c, writer, "simple")
+
+	logger.Infof("with args %d", 42)
+	checkLastMessage(c, writer, "with args 42")
+
+	logger.Infof("working 100%")
+	checkLastMessage(c, writer, "working 100%")
+
+	logger.Infof("missing %s")
+	checkLastMessage(c, writer, "missing %s")
+
+	logger.InfoStackf(nil, "")
+	checkLastMessage(c, writer, "<nil>")
+
+	logger.InfoStackf(nil, "some error")
+	checkLastMessage(c, writer, "some error: <nil>")
+
+	logger.InfoStackf(fmt.Errorf("an error"), "")
+	checkLastMessage(c, writer, "an error")
+
+	logger.InfoStackf(fmt.Errorf("an error"), "some error")
+	checkLastMessage(c, writer, "some error: an error")
+
+	emptyStack := &stack_error{"message", ""}
+	logger.InfoStackf(emptyStack, "some error")
+	checkLastMessage(c, writer, "some error: message")
+
+	withStack := &stack_error{"message", "filename:line\nfilename2:line2\n"}
+	logger.InfoStackf(withStack, "some error")
+	checkLastMessage(c, writer, `
+some error: message
+filename:line
+filename2:line2`[1:])
+
+	// edge case... typed nil error
+	var nilErr *stack_error
+	logger.InfoStackf(nilErr, "")
+	checkLastMessage(c, writer, "<nil>")
+}
+
+func (*loggerSuite) TestLocationCapture(c *gc.C) {
+	writer := &loggo.TestWriter{}
+	loggo.ReplaceDefaultWriter(writer)
+	logger := loggo.GetLogger("test")
+	logger.SetLogLevel(loggo.TRACE)
+
+	logger.Criticalf("critical message") //tag critical-location
+	logger.Errorf("error message")       //tag error-location
+	logger.Warningf("warning message")   //tag warning-location
+	logger.Infof("info message")         //tag info-location
+	logger.Debugf("debug message")       //tag debug-location
+	logger.Tracef("trace message")       //tag trace-location
+
+	logger.CriticalStackf(nil, "critical message") //tag critical-stack-location
+	logger.ErrorStackf(nil, "error message")       //tag error-stack-location
+	logger.WarningStackf(nil, "warning message")   //tag warning-stack-location
+	logger.InfoStackf(nil, "info message")         //tag info-stack-location
+	logger.DebugStackf(nil, "debug message")       //tag debug-stack-location
+	logger.TraceStackf(nil, "trace message")       //tag trace-stack-location
+
+	log := writer.Log()
+	tags := []string{
+		"critical-location",
+		"error-location",
+		"warning-location",
+		"info-location",
+		"debug-location",
+		"trace-location",
+		"critical-stack-location",
+		"error-stack-location",
+		"warning-stack-location",
+		"info-stack-location",
+		"debug-stack-location",
+		"trace-stack-location",
+	}
+	c.Assert(log, gc.HasLen, len(tags))
+	for x := range tags {
+		assertLocation(c, log[x], tags[x])
+	}
+
 }
 
 var configureLoggersTests = []struct {
